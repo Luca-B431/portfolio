@@ -1,0 +1,22 @@
+services:
+  portfolio-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio-dev
+    ports:
+      - '5173:5173'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+
+  portfolio-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio-build
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run build
