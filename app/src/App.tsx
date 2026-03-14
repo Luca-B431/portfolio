@@ -1,19 +1,19 @@
-import { lazy, Suspense } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
+import ReactAtomLogo3D from './components/ReactAtomLogo3D'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectsPage from './pages/ProjectsPage'
 import { ROUTES } from './router/routes'
 
-const WaveBackground = lazy(() => import('./components/WaveBackground'))
-
 function App() {
   return (
     <div className="site-shell">
-      <Suspense fallback={null}>
-        <WaveBackground />
-      </Suspense>
+      {/* Background-only 3D atom logo, anchored visually at bottom-right. */}
+      <div className="bg-atom-wrap" aria-hidden="true">
+        <ReactAtomLogo3D />
+      </div>
+      {/* Foreground app content. */}
       <header className="site-header">
         <NavLink className="brand" to={ROUTES.home}>
           Billat Luca
