@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import ReactAtomLogo3D from './components/ReactAtomLogo3D'
 import HomePage from './pages/HomePage'
@@ -7,32 +8,94 @@ import ProjectsPage from './pages/ProjectsPage'
 import { ROUTES } from './router/routes'
 
 function App() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const stored = window.localStorage.getItem('site-theme')
+    if (stored === 'light' || stored === 'dark') {
+      return stored
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('site-theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }
+
   return (
     <div className="site-shell">
-      {/* Background-only 3D atom logo, anchored visually at bottom-right. */}
       <div className="bg-atom-wrap" aria-hidden="true">
         <ReactAtomLogo3D />
       </div>
-      {/* Foreground app content. */}
       <header className="site-header">
-        <NavLink className="brand" to={ROUTES.home}>
-          Billat Luca
-        </NavLink>
-        <nav className="main-nav" aria-label="Navigation principale">
-          <NavLink
-            to={ROUTES.home}
-            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-          >
-            Home
+        <div className="brand-cluster brand-line-animated">
+          <NavLink className="brand" to={ROUTES.home}>
+            <span className="brand-main">Billat Luca</span>
           </NavLink>
-          <NavLink
-            to={ROUTES.projects}
-            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+          <span className="brand-meta">- Developpeur d'applications Full-Stack React Junior</span>
+        </div>
+
+        <div className="header-controls">
+          <nav className="main-nav" aria-label="Navigation principale">
+            <NavLink to={ROUTES.home} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              Home
+            </NavLink>
+            <NavLink to={ROUTES.projects} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              Projects
+            </NavLink>
+          </nav>
+
+          <button
+            className={`theme-toggle ${theme === 'dark' ? 'is-dark' : ''}`}
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
           >
-            Projects
-          </NavLink>
-        </nav>
+            <span className="theme-toggle-icon">☀</span>
+            <span className="theme-toggle-icon">◐</span>
+            <span className="theme-toggle-thumb" />
+          </button>
+        </div>
       </header>
+
+      <div className="social-corner" aria-label="Liens sociaux">
+        <a className="social-link" href="https://react.dev" target="_blank" rel="noreferrer" aria-label="React">
+          <svg className="social-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <circle cx="32" cy="32" r="3.6" fill="currentColor" />
+            <ellipse cx="32" cy="32" rx="20" ry="7.8" fill="none" stroke="currentColor" strokeWidth="3" />
+            <ellipse cx="32" cy="32" rx="20" ry="7.8" fill="none" stroke="currentColor" strokeWidth="3" transform="rotate(60 32 32)" />
+            <ellipse cx="32" cy="32" rx="20" ry="7.8" fill="none" stroke="currentColor" strokeWidth="3" transform="rotate(120 32 32)" />
+          </svg>
+          <span className="social-name">React</span>
+        </a>
+
+        <a className="social-link" href="https://github.com/Luca-B431" target="_blank" rel="noreferrer" aria-label="GitHub">
+          <svg className="social-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.5 0-.24-.01-.89-.01-1.75-2.78.62-3.37-1.38-3.37-1.38-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .08 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.15-4.55-5.11 0-1.13.39-2.05 1.03-2.77-.1-.26-.45-1.32.1-2.76 0 0 .84-.28 2.75 1.06A9.3 9.3 0 0 1 12 6.84c.85 0 1.7.12 2.5.36 1.9-1.34 2.74-1.06 2.74-1.06.56 1.44.21 2.5.1 2.76.64.72 1.03 1.64 1.03 2.77 0 3.97-2.33 4.84-4.56 5.1.36.32.68.95.68 1.92 0 1.39-.01 2.51-.01 2.85 0 .28.18.6.69.5A10.25 10.25 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z" />
+          </svg>
+          <span className="social-name">GitHub</span>
+        </a>
+
+        <a className="social-link" href="https://www.linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+          <svg className="social-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M6.94 8.5v12H3.05v-12h3.89Zm.25-3.72c0 1.13-.85 2.03-2.2 2.03h-.03c-1.3 0-2.14-.9-2.14-2.03 0-1.16.87-2.03 2.2-2.03s2.14.87 2.17 2.03ZM20.95 13.62v6.88h-3.9v-6.43c0-1.62-.58-2.72-2.03-2.72-1.11 0-1.77.75-2.06 1.47-.11.26-.13.62-.13.98v6.7h-3.9s.05-10.88 0-12h3.9v1.7c.52-.8 1.45-1.95 3.54-1.95 2.58 0 4.51 1.69 4.51 5.37Z" />
+          </svg>
+          <span className="social-name">LinkedIn</span>
+        </a>
+
+        <a className="social-link" href="https://www.malt.fr" target="_blank" rel="noreferrer" aria-label="Malt">
+          <svg className="social-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor" />
+            <path className="social-icon-malt-letter" d="M7.3 16V8h2.2l2.5 3.5L14.5 8h2.2v8h-2.2v-4.8L12 14.5l-2.5-3.3V16H7.3Z" />
+          </svg>
+          <span className="social-name">Malt</span>
+        </a>
+      </div>
 
       <main className="content-area">
         <Routes>

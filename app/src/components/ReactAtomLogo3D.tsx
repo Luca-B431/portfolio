@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { ATOM_PALETTE } from '../theme/atomPalette'
 
 type OrbitConfig = {
   radius: number
@@ -9,11 +10,6 @@ type OrbitConfig = {
   tilt: THREE.Euler
   centerOffset: THREE.Vector3
   ellipseY: number
-}
-
-type AtomPalette = {
-  color: string
-  emissive: string
 }
 
 export default function ReactAtomLogo3D() {
@@ -99,13 +95,6 @@ export default function ReactAtomLogo3D() {
       logoGroup.add(ring)
     })
 
-    const atomPalette: AtomPalette[] = [
-      { color: '#ff5b5b', emissive: '#d32626' },
-      { color: '#5fdc84', emissive: '#27a752' },
-      { color: '#ffd84a', emissive: '#caa100' },
-      { color: '#9dc2ff', emissive: '#4e84ff' },
-    ]
-
     const atomGeometry = new THREE.SphereGeometry(0.17, 20, 20)
     geometries.push(atomGeometry)
 
@@ -120,7 +109,7 @@ export default function ReactAtomLogo3D() {
     const atomGlowGeometry = new THREE.SphereGeometry(0.32, 16, 16)
     geometries.push(atomGlowGeometry)
 
-    const orbitCount = 4
+    const orbitCount = ATOM_PALETTE.length
     const orbitConfigs: OrbitConfig[] = Array.from({ length: orbitCount }, (_, index) => {
       const direction = Math.random() > 0.5 ? 1 : -1
       return {
@@ -129,7 +118,7 @@ export default function ReactAtomLogo3D() {
         phase: Math.random() * Math.PI * 2,
         tilt: new THREE.Euler(
           Math.PI / 2 + (Math.random() - 0.5) * 0.5,
-          ((index / orbitCount) * Math.PI * 2) / 3 + (Math.random() - 0.5) * 0.8,
+          (index / orbitCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.8,
           (Math.random() - 0.5) * 0.35,
         ),
         centerOffset: new THREE.Vector3(
@@ -142,7 +131,7 @@ export default function ReactAtomLogo3D() {
     })
 
     const atomOrbitData = orbitConfigs.map((config, index) => {
-      const palette = atomPalette[index % atomPalette.length]
+      const palette = ATOM_PALETTE[index % ATOM_PALETTE.length]
       const atomMaterial = new THREE.MeshStandardMaterial({
         color: palette.color,
         metalness: 0.95,
@@ -240,6 +229,70 @@ export default function ReactAtomLogo3D() {
     const frontFill = new THREE.PointLight('#ffffff', 0.55, 20)
     frontFill.position.set(0, 1.6, 5.4)
     scene.add(frontFill)
+
+    let isDarkTheme = false
+
+    const applyThemeToLogo = (theme: 'light' | 'dark') => {
+      const dark = theme === 'dark'
+      isDarkTheme = dark
+
+      if (dark) {
+        metalMaterial.color.set('#141820')
+        metalMaterial.emissive.set('#0f131a')
+
+        ringMaterial.color.set('#1c212b')
+        ringMaterial.emissive.set('#111724')
+
+        nucleusMaterial.color.set('#171c26')
+        nucleusMaterial.emissive.set('#121723')
+        nucleusMaterial.clearcoat = 0.34
+        nucleusMaterial.reflectivity = 0.55
+        nucleusMaterial.roughness = 0.06
+        nucleusMaterial.clearcoatRoughness = 0.14
+        nucleusMaterial.envMapIntensity = 0.9
+
+        ambientLight.intensity = 0.62
+        keyLight.intensity = 0.88
+        rimLight.intensity = 0.6
+        topFill.intensity = 0.52
+        frontFill.intensity = 0.34
+      } else {
+        metalMaterial.color.set('#f0f2f6')
+        metalMaterial.emissive.set('#d4d9e3')
+
+        ringMaterial.color.set('#f7f9fd')
+        ringMaterial.emissive.set('#dde3ef')
+
+        nucleusMaterial.color.set('#f5f7fb')
+        nucleusMaterial.emissive.set('#f2f5ff')
+        nucleusMaterial.clearcoat = 1
+        nucleusMaterial.reflectivity = 1
+        nucleusMaterial.roughness = 0.02
+        nucleusMaterial.clearcoatRoughness = 0.02
+        nucleusMaterial.envMapIntensity = 3.1
+
+        ambientLight.intensity = 0.78
+        keyLight.intensity = 1.85
+        rimLight.intensity = 0.95
+        topFill.intensity = 0.84
+        frontFill.intensity = 0.55
+      }
+    }
+
+    const readTheme = (): 'light' | 'dark' => {
+      return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+    }
+
+    applyThemeToLogo(readTheme())
+
+    const themeObserver = new MutationObserver(() => {
+      applyThemeToLogo(readTheme())
+    })
+
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
 
     const handleResize = () => {
       const width = mountNode.clientWidth
@@ -383,13 +436,20 @@ export default function ReactAtomLogo3D() {
 
       const lightPulse = Math.sin(t * 1.12) * 0.5 + 0.5
       const shadowPulse = Math.sin(t * 0.86 + 0.4) * 0.5 + 0.5
-      keyLight.intensity = 1.4 + lightPulse * 0.55
-      rimLight.intensity = 0.7 + lightPulse * 0.3
-      topFill.intensity = 0.62 + lightPulse * 0.26
-      frontFill.intensity = 0.42 + lightPulse * 0.18
+      if (isDarkTheme) {
+        keyLight.intensity = 0.7 + lightPulse * 0.06
+        rimLight.intensity = 0.42 + lightPulse * 0.06
+        topFill.intensity = 0.36 + lightPulse * 0.02
+        frontFill.intensity = 0.22 + lightPulse * 0.02
+      } else {
+        keyLight.intensity = 1.4 + lightPulse * 0.55
+        rimLight.intensity = 0.7 + lightPulse * 0.3
+        topFill.intensity = 0.62 + lightPulse * 0.26
+        frontFill.intensity = 0.42 + lightPulse * 0.18
+      }
       metalMaterial.emissiveIntensity = 0.08 + lightPulse * 0.08
       ringMaterial.emissiveIntensity = 0.14 + lightPulse * 0.16
-      nucleusMaterial.emissiveIntensity = 0.04 + lightPulse * 0.06
+      nucleusMaterial.emissiveIntensity = isDarkTheme ? 0.008 + lightPulse * 0.012 : 0.04 + lightPulse * 0.06
       atomOrbitData.forEach((atomData) => {
         atomData.atomMaterial.emissiveIntensity = 0.16 + lightPulse * 0.15
       })
@@ -421,6 +481,7 @@ export default function ReactAtomLogo3D() {
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pointerdown', handlePointerDown)
+      themeObserver.disconnect()
 
       scene.remove(logoGroup)
       scene.remove(ambientLight)
