@@ -36,7 +36,7 @@ function App() {
           <NavLink className="brand" to={ROUTES.home}>
             <span className="brand-main">Billat Luca</span>
           </NavLink>
-          <span className="brand-meta">- Developpeur d'applications Full-Stack React Junior</span>
+          <span className="brand-meta"> Developpeur d'applications Full-Stack React Junior</span>
         </div>
 
         <div className="header-controls">

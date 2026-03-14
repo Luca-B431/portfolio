@@ -108,6 +108,39 @@ export default function ReactAtomLogo3D() {
 
     const atomGlowGeometry = new THREE.SphereGeometry(0.32, 16, 16)
     geometries.push(atomGlowGeometry)
+    const trailPointCount = 18
+    const sparkleCount = 96
+    const sparkleGeometry = new THREE.SphereGeometry(0.014, 8, 8)
+    geometries.push(sparkleGeometry)
+    const sparkleFireColors = ['#fffef2', '#fff7bf', '#ffe978', '#ffd84a']
+
+    const trailAlphaCanvas = document.createElement('canvas')
+    trailAlphaCanvas.width = 256
+    trailAlphaCanvas.height = 4
+    const trailAlphaCtx = trailAlphaCanvas.getContext('2d')
+
+    if (!trailAlphaCtx) {
+      pmrem.dispose()
+      envTexture.dispose()
+      renderer.dispose()
+      if (mountNode.contains(renderer.domElement)) {
+        mountNode.removeChild(renderer.domElement)
+      }
+      return
+    }
+
+    const trailAlphaGradient = trailAlphaCtx.createLinearGradient(0, 0, 256, 0)
+    trailAlphaGradient.addColorStop(0, 'rgba(255,255,255,1)')
+    trailAlphaGradient.addColorStop(0.55, 'rgba(255,255,255,0.42)')
+    trailAlphaGradient.addColorStop(1, 'rgba(0,0,0,0)')
+    trailAlphaCtx.fillStyle = trailAlphaGradient
+    trailAlphaCtx.fillRect(0, 0, 256, 4)
+
+    const trailAlphaTexture = new THREE.CanvasTexture(trailAlphaCanvas)
+    trailAlphaTexture.wrapS = THREE.ClampToEdgeWrapping
+    trailAlphaTexture.wrapT = THREE.ClampToEdgeWrapping
+    trailAlphaTexture.minFilter = THREE.LinearFilter
+    trailAlphaTexture.magFilter = THREE.LinearFilter
 
     const orbitCount = ATOM_PALETTE.length
     const orbitConfigs: OrbitConfig[] = Array.from({ length: orbitCount }, (_, index) => {
@@ -146,6 +179,88 @@ export default function ReactAtomLogo3D() {
       logoGroup.add(atom)
       logoGroup.add(glow)
 
+      const trailHistory = Array.from({ length: trailPointCount }, () => new THREE.Vector3())
+      const trailMaterial = new THREE.MeshBasicMaterial({
+        color: palette.color,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        alphaMap: trailAlphaTexture,
+        blending: THREE.AdditiveBlending,
+      })
+      materials.push(trailMaterial)
+
+      const trailGeometry = new THREE.BufferGeometry()
+      const trailPositions = new Float32Array(trailPointCount * 2 * 3)
+      trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3))
+
+      const trailUvs = new Float32Array(trailPointCount * 2 * 2)
+      for (let p = 0; p < trailPointCount; p += 1) {
+        const u = p / Math.max(trailPointCount - 1, 1)
+        const uvOffset = p * 4
+        trailUvs[uvOffset] = u
+        trailUvs[uvOffset + 1] = 0
+        trailUvs[uvOffset + 2] = u
+        trailUvs[uvOffset + 3] = 1
+      }
+      trailGeometry.setAttribute('uv', new THREE.BufferAttribute(trailUvs, 2))
+
+      const trailIndices = new Uint16Array((trailPointCount - 1) * 6)
+      for (let i = 0; i < trailPointCount - 1; i += 1) {
+        const base = i * 2
+        const offset = i * 6
+        trailIndices[offset] = base
+        trailIndices[offset + 1] = base + 1
+        trailIndices[offset + 2] = base + 2
+        trailIndices[offset + 3] = base + 1
+        trailIndices[offset + 4] = base + 3
+        trailIndices[offset + 5] = base + 2
+      }
+      trailGeometry.setIndex(new THREE.BufferAttribute(trailIndices, 1))
+      geometries.push(trailGeometry)
+
+      const trailMesh = new THREE.Mesh(trailGeometry, trailMaterial)
+      trailMesh.frustumCulled = false
+      logoGroup.add(trailMesh)
+
+      const sparkleData = Array.from({ length: sparkleCount }, () => {
+        const warmColor = new THREE.Color(
+          sparkleFireColors[Math.floor(Math.random() * sparkleFireColors.length)],
+        )
+        const hotColor = new THREE.Color('#ffffff')
+
+        const sparkleMaterial = new THREE.MeshBasicMaterial({
+          color: warmColor,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          depthTest: false,
+          blending: THREE.AdditiveBlending,
+        })
+        materials.push(sparkleMaterial)
+
+        const sparkle = new THREE.Mesh(sparkleGeometry, sparkleMaterial)
+        sparkle.frustumCulled = false
+        sparkle.renderOrder = 30
+        logoGroup.add(sparkle)
+
+        return {
+          sparkle,
+          sparkleMaterial,
+          trailOffset: Math.floor(3 + Math.random() * Math.max(1, trailPointCount - 5)),
+          phase: Math.random() * Math.PI * 2,
+          radiusFactor: 1.25 + Math.random() * 1.6,
+          blinkRate: 20 + Math.random() * 34,
+          pulseSeed: Math.random() * Math.PI * 2,
+          orbitSpeed: 5 + Math.random() * 10,
+          driftSeed: Math.random() * Math.PI * 2,
+          shellOffset: 0.38 + Math.random() * 0.7,
+          warmColor,
+          hotColor,
+        }
+      })
+
       const tiltQuaternion = new THREE.Quaternion().setFromEuler(config.tilt)
       const localPoint = new THREE.Vector3()
 
@@ -154,6 +269,12 @@ export default function ReactAtomLogo3D() {
         atom,
         atomMaterial,
         glow,
+        trailMesh,
+        trailMaterial,
+        trailGeometry,
+        trailPositions,
+        trailHistory,
+        sparkleData,
         tiltQuaternion,
         localPoint,
       }
@@ -243,19 +364,20 @@ export default function ReactAtomLogo3D() {
         ringMaterial.color.set('#1c212b')
         ringMaterial.emissive.set('#111724')
 
-        nucleusMaterial.color.set('#171c26')
-        nucleusMaterial.emissive.set('#121723')
-        nucleusMaterial.clearcoat = 0.34
-        nucleusMaterial.reflectivity = 0.55
-        nucleusMaterial.roughness = 0.06
-        nucleusMaterial.clearcoatRoughness = 0.14
-        nucleusMaterial.envMapIntensity = 0.9
+        nucleusMaterial.color.set('#0f131a')
+        nucleusMaterial.emissive.set('#0a0d12')
+        nucleusMaterial.metalness = 0.62
+        nucleusMaterial.clearcoat = 0.02
+        nucleusMaterial.reflectivity = 0.12
+        nucleusMaterial.roughness = 0.28
+        nucleusMaterial.clearcoatRoughness = 0.34
+        nucleusMaterial.envMapIntensity = 0.22
 
         ambientLight.intensity = 0.62
-        keyLight.intensity = 0.88
-        rimLight.intensity = 0.6
-        topFill.intensity = 0.52
-        frontFill.intensity = 0.34
+        keyLight.intensity = 0.5
+        rimLight.intensity = 0.28
+        topFill.intensity = 0.22
+        frontFill.intensity = 0.12
       } else {
         metalMaterial.color.set('#f0f2f6')
         metalMaterial.emissive.set('#d4d9e3')
@@ -265,6 +387,7 @@ export default function ReactAtomLogo3D() {
 
         nucleusMaterial.color.set('#f5f7fb')
         nucleusMaterial.emissive.set('#f2f5ff')
+        nucleusMaterial.metalness = 1
         nucleusMaterial.clearcoat = 1
         nucleusMaterial.reflectivity = 1
         nucleusMaterial.roughness = 0.02
@@ -339,6 +462,15 @@ export default function ReactAtomLogo3D() {
     const spotWorld = new THREE.Vector3()
     const cameraDirFromCenter = new THREE.Vector3()
     const spotNormalWorld = new THREE.Vector3()
+    const cameraLocal = new THREE.Vector3()
+    const trailTangent = new THREE.Vector3()
+    const trailDir = new THREE.Vector3()
+    const trailView = new THREE.Vector3()
+    const trailSide = new THREE.Vector3()
+    const trailUp = new THREE.Vector3()
+    const sparkleRadial = new THREE.Vector3()
+    const trailVertexA = new THREE.Vector3()
+    const trailVertexB = new THREE.Vector3()
 
     logoGroup.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2)
 
@@ -376,10 +508,12 @@ export default function ReactAtomLogo3D() {
       const t = time * 0.001
       const burstDuration = 2.4
       const burstElapsed = t - burstStartTime
+      let burstProgress = 0
 
       let burstStrength = 0
       if (burstElapsed >= 0 && burstElapsed <= burstDuration) {
         const progress = burstElapsed / burstDuration
+        burstProgress = progress
 
         if (progress < 0.18) {
           const fastOut = progress / 0.18
@@ -392,6 +526,8 @@ export default function ReactAtomLogo3D() {
 
       nucleus.getWorldPosition(nucleusWorld)
       cameraDirFromCenter.copy(camera.position).sub(nucleusWorld).normalize()
+      cameraLocal.copy(camera.position)
+      logoGroup.worldToLocal(cameraLocal)
 
       atomOrbitData.forEach((item, index) => {
         const theta = t * item.config.speed + item.config.phase
@@ -405,6 +541,112 @@ export default function ReactAtomLogo3D() {
         const worldPoint = item.localPoint.applyQuaternion(item.tiltQuaternion).add(item.config.centerOffset)
         item.atom.position.copy(worldPoint)
         item.glow.position.copy(worldPoint)
+
+        if (burstStrength > 0.02) {
+          item.trailHistory[0].copy(worldPoint)
+          for (let p = trailPointCount - 1; p >= 1; p -= 1) {
+            item.trailHistory[p].lerp(item.trailHistory[p - 1], 0.48)
+          }
+        } else {
+          for (let p = 0; p < trailPointCount; p += 1) {
+            item.trailHistory[p].lerp(worldPoint, 0.14)
+          }
+        }
+
+        for (let p = 0; p < trailPointCount; p += 1) {
+          const point = item.trailHistory[p]
+          const prev = item.trailHistory[Math.max(0, p - 1)]
+          const next = item.trailHistory[Math.min(trailPointCount - 1, p + 1)]
+
+          trailTangent.subVectors(next, prev)
+          if (trailTangent.lengthSq() < 1e-6) {
+            trailTangent.set(1, 0, 0)
+          }
+
+          trailView.subVectors(cameraLocal, point)
+          trailSide.crossVectors(trailTangent, trailView)
+          if (trailSide.lengthSq() < 1e-6) {
+            trailSide.set(0, 1, 0)
+          }
+          trailSide.normalize()
+
+          const taper = 1 - p / Math.max(trailPointCount - 1, 1)
+          const halfWidth = (0.006 + taper * 0.06) * (0.28 + burstStrength * 1.9)
+
+          trailVertexA.copy(point).addScaledVector(trailSide, halfWidth)
+          trailVertexB.copy(point).addScaledVector(trailSide, -halfWidth)
+
+          const left = p * 2 * 3
+          const right = left + 3
+
+          item.trailPositions[left] = trailVertexA.x
+          item.trailPositions[left + 1] = trailVertexA.y
+          item.trailPositions[left + 2] = trailVertexA.z
+          item.trailPositions[right] = trailVertexB.x
+          item.trailPositions[right + 1] = trailVertexB.y
+          item.trailPositions[right + 2] = trailVertexB.z
+        }
+
+        const trailPositionAttribute = item.trailGeometry.attributes.position as THREE.BufferAttribute
+        trailPositionAttribute.needsUpdate = true
+        item.trailMaterial.opacity = burstStrength * (isDarkTheme ? 0.62 : 0.7)
+
+        item.sparkleData.forEach((sparkle, sparkleIndex) => {
+          const trailIndex = Math.min(trailPointCount - 1, sparkle.trailOffset)
+          const basePoint = item.trailHistory[trailIndex]
+          const prevPoint = item.trailHistory[Math.max(0, trailIndex - 1)]
+          const trailTaper = 1 - trailIndex / Math.max(trailPointCount - 1, 1)
+          const trailHalfWidth = (0.006 + trailTaper * 0.06) * (0.28 + burstStrength * 1.9)
+
+          trailDir.subVectors(basePoint, prevPoint)
+          if (trailDir.lengthSq() < 1e-6) {
+            trailDir.set(1, 0, 0)
+          }
+          trailDir.normalize()
+
+          trailView.subVectors(cameraLocal, basePoint)
+          trailSide.crossVectors(trailDir, trailView)
+          if (trailSide.lengthSq() < 1e-6) {
+            trailSide.set(0, 1, 0)
+          }
+          trailSide.normalize()
+
+          trailUp.crossVectors(trailSide, trailDir)
+          if (trailUp.lengthSq() < 1e-6) {
+            trailUp.set(0, 0, 1)
+          }
+          trailUp.normalize()
+
+          const orbitAngle = t * sparkle.orbitSpeed + sparkle.phase
+          sparkleRadial
+            .copy(trailSide)
+            .multiplyScalar(Math.cos(orbitAngle))
+            .addScaledVector(trailUp, Math.sin(orbitAngle))
+            .normalize()
+
+          const baseTwinkle = 0.16 + 0.84 * Math.pow(Math.max(0, Math.sin(t * sparkle.blinkRate + sparkle.pulseSeed)), 2.2)
+          const flashBurst = Math.max(0, Math.sin(t * (sparkle.blinkRate * 1.7) + sparkle.phase * 1.9))
+          const flashBoost = Math.pow(flashBurst, 7)
+          const twinkle = Math.min(1, baseTwinkle + flashBoost * 1.8)
+          const introGate = THREE.MathUtils.smoothstep(burstProgress, 0.08, 0.32)
+          const visibility = Math.min(
+            1,
+            burstStrength * introGate * (0.8 + twinkle * 2.1) * (isDarkTheme ? 1.35 : 1.55),
+          )
+          const driftBack = 0.01 + burstStrength * (0.045 + sparkleIndex * 0.002)
+          const shellPulse = 0.75 + 0.25 * Math.sin(t * 7.5 + sparkle.driftSeed)
+          const haloRadius = trailHalfWidth * (sparkle.radiusFactor + sparkle.shellOffset) * shellPulse
+
+          sparkle.sparkle.position
+            .copy(basePoint)
+            .addScaledVector(trailDir, -driftBack)
+            .addScaledVector(sparkleRadial, haloRadius)
+
+          const sparkleScale = 0.2 + burstStrength * (0.44 + twinkle * 0.36)
+          sparkle.sparkle.scale.setScalar(sparkleScale)
+          sparkle.sparkleMaterial.color.copy(sparkle.warmColor).lerp(sparkle.hotColor, twinkle * 0.9)
+          sparkle.sparkleMaterial.opacity = visibility
+        })
 
         const spotData = reflectionSpots[index]
         const normal = tempNormal.copy(worldPoint).normalize()
@@ -437,10 +679,10 @@ export default function ReactAtomLogo3D() {
       const lightPulse = Math.sin(t * 1.12) * 0.5 + 0.5
       const shadowPulse = Math.sin(t * 0.86 + 0.4) * 0.5 + 0.5
       if (isDarkTheme) {
-        keyLight.intensity = 0.7 + lightPulse * 0.06
-        rimLight.intensity = 0.42 + lightPulse * 0.06
-        topFill.intensity = 0.36 + lightPulse * 0.02
-        frontFill.intensity = 0.22 + lightPulse * 0.02
+        keyLight.intensity = 0.38 + lightPulse * 0.03
+        rimLight.intensity = 0.22 + lightPulse * 0.03
+        topFill.intensity = 0.18 + lightPulse * 0.01
+        frontFill.intensity = 0.1 + lightPulse * 0.008
       } else {
         keyLight.intensity = 1.4 + lightPulse * 0.55
         rimLight.intensity = 0.7 + lightPulse * 0.3
@@ -449,7 +691,7 @@ export default function ReactAtomLogo3D() {
       }
       metalMaterial.emissiveIntensity = 0.08 + lightPulse * 0.08
       ringMaterial.emissiveIntensity = 0.14 + lightPulse * 0.16
-      nucleusMaterial.emissiveIntensity = isDarkTheme ? 0.008 + lightPulse * 0.012 : 0.04 + lightPulse * 0.06
+      nucleusMaterial.emissiveIntensity = isDarkTheme ? 0.002 + lightPulse * 0.004 : 0.04 + lightPulse * 0.06
       atomOrbitData.forEach((atomData) => {
         atomData.atomMaterial.emissiveIntensity = 0.16 + lightPulse * 0.15
       })
@@ -493,6 +735,7 @@ export default function ReactAtomLogo3D() {
 
       pmrem.dispose()
       envTexture.dispose()
+      trailAlphaTexture.dispose()
       shadowTexture.dispose()
       geometries.forEach((geometry) => geometry.dispose())
       materials.forEach((material) => material.dispose())
