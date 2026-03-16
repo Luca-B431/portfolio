@@ -9,10 +9,10 @@ export default function HomePage() {
         <span className="eyebrow-word delay-1">React</span>
         <span className="eyebrow-word delay-2">Junior</span>
       </p>
-      <h1>Je construis des applications React claires, utiles et bien structurees.</h1>
+      <h1>Developpeur d'applications full-stack junior, je cree des interfaces React propres et des API fiables.</h1>
       <p className="hero-copy">
-        Ce portfolio me sert de terrain d'entrainement pour React, le routing, Docker
-        et le deploiement continu avec Vercel.
+        Sur ce portfolio, je presente des projets concrets realises avec React, TypeScript et Node,
+        avec une attention particuliere a la qualite du code, au deploiement et a l'experience utilisateur.
       </p>
       <div className="hero-actions">
         <Link className="btn btn-primary" to={ROUTES.projects}>

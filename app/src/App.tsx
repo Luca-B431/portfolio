@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import ReactAtomLogo3D from './components/ReactAtomLogo3D'
+import ParticleField from './components/ParticleField'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
@@ -22,6 +23,72 @@ function App() {
     window.localStorage.setItem('site-theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+
+    const selector = '.hero-panel, .detail-card, .project-card'
+    const directions = [
+      { sx: '120%', sy: '0%', ex: '-30%', ey: '0%', angle: '112deg' },
+      { sx: '-30%', sy: '0%', ex: '120%', ey: '0%', angle: '68deg' },
+      { sx: '50%', sy: '-45%', ex: '50%', ey: '130%', angle: '180deg' },
+      { sx: '50%', sy: '130%', ex: '50%', ey: '-45%', angle: '0deg' },
+      { sx: '120%', sy: '-30%', ex: '-30%', ey: '120%', angle: '132deg' },
+      { sx: '-30%', sy: '120%', ex: '120%', ey: '-30%', angle: '42deg' },
+      { sx: '110%', sy: '85%', ex: '-20%', ey: '15%', angle: '22deg' },
+      { sx: '-20%', sy: '15%', ex: '110%', ey: '85%', angle: '158deg' },
+    ]
+
+    const pendingTimeouts = new Set<number>()
+    const schedule = (fn: () => void, delay: number) => {
+      const id = window.setTimeout(() => {
+        pendingTimeouts.delete(id)
+        fn()
+      }, delay)
+      pendingTimeouts.add(id)
+      return id
+    }
+
+    const triggerRandomFlare = () => {
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>(selector))
+      nodes.forEach((node, index) => {
+        const direction = directions[Math.floor(Math.random() * directions.length)]
+        const duration = 1400 + Math.random() * 900
+        const delay = Math.random() * 2600 + index * 120
+
+        schedule(() => {
+          node.style.setProperty('--glass-start-x', direction.sx)
+          node.style.setProperty('--glass-start-y', direction.sy)
+          node.style.setProperty('--glass-end-x', direction.ex)
+          node.style.setProperty('--glass-end-y', direction.ey)
+          node.style.setProperty('--glass-angle', direction.angle)
+          node.style.setProperty('--glass-duration', `${duration}ms`)
+
+          node.classList.remove('glass-flare-active')
+          void node.offsetWidth
+          node.classList.add('glass-flare-active')
+
+          schedule(() => {
+            node.classList.remove('glass-flare-active')
+          }, duration + 90)
+        }, delay)
+      })
+    }
+
+    schedule(triggerRandomFlare, 1200)
+    const intervalId = window.setInterval(triggerRandomFlare, 20000)
+
+    return () => {
+      window.clearInterval(intervalId)
+      pendingTimeouts.forEach((id) => window.clearTimeout(id))
+      pendingTimeouts.clear()
+      document.querySelectorAll<HTMLElement>(selector).forEach((node) => {
+        node.classList.remove('glass-flare-active')
+      })
+    }
+  }, [])
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }
@@ -31,6 +98,7 @@ function App() {
       <div className="bg-atom-wrap" aria-hidden="true">
         <ReactAtomLogo3D />
       </div>
+      <ParticleField />
       <header className="site-header">
         <div className="brand-cluster brand-line-animated">
           <NavLink className="brand" to={ROUTES.home}>
