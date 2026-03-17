@@ -24,6 +24,37 @@ function App() {
   }, [theme])
 
   useEffect(() => {
+    const root = document.documentElement
+
+    const updateMobileStaticLock = () => {
+      const isMobile = window.matchMedia('(max-width: 700px)').matches
+      if (!isMobile) {
+        root.classList.remove('mobile-static-lock')
+        return
+      }
+
+      const shell = document.querySelector<HTMLElement>('.site-shell')
+      if (!shell) {
+        return
+      }
+
+      const viewportHeight = window.innerHeight
+      const fitsInViewport = shell.scrollHeight <= viewportHeight + 2
+      root.classList.toggle('mobile-static-lock', fitsInViewport)
+    }
+
+    updateMobileStaticLock()
+    window.addEventListener('resize', updateMobileStaticLock)
+    window.addEventListener('orientationchange', updateMobileStaticLock)
+
+    return () => {
+      window.removeEventListener('resize', updateMobileStaticLock)
+      window.removeEventListener('orientationchange', updateMobileStaticLock)
+      root.classList.remove('mobile-static-lock')
+    }
+  }, [])
+
+  useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return
     }
