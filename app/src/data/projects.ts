@@ -5,7 +5,8 @@ export interface Project {
   shortDescription: string
   longDescription: string
   stack: string[]
-  liveUrl: string
+  /** null when the project has no live deployment yet */
+  liveUrl: string | null
   repoUrl: string
 }
 
@@ -18,7 +19,7 @@ export const projects: Project[] = [
     longDescription:
       "Ce portfolio est mon premier projet. Il est construit avec React, TypeScript, React Router, Docker et un deploiement Vercel.",
     stack: ['React', 'TypeScript', 'React Router', 'Three.js', 'Docker', 'Vercel'],
-    liveUrl: '',
+    liveUrl: null,
     repoUrl: 'https://github.com/Luca-B431',
   },
 ]

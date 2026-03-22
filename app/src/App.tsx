@@ -1,12 +1,80 @@
-import { useEffect, useState } from 'react'
-import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
-import ReactAtomLogo3D from './components/ReactAtomLogo3D'
-import ParticleField from './components/ParticleField'
+import { useEffect, useLayoutEffect, useState } from 'react'
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import SceneBackground from './components/SceneBackground'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectsPage from './pages/ProjectsPage'
 import { ROUTES } from './router/routes'
+
+const REVEAL_SELECTORS = [
+  '.eyebrow:not(.eyebrow-animated)',
+  '.hero-panel h1',
+  '.hero-panel .hero-copy',
+  '.hero-panel .hero-actions',
+  '.section-head h1',
+  '.project-card',
+  '.detail-card h1',
+  '.detail-card > p:not(.eyebrow)',
+  '.detail-card .stack-list',
+  '.detail-card .hero-actions',
+  '.detail-card > .text-link',
+]
+
+function collectRevealElements(): HTMLElement[] {
+  const seen = new Set<HTMLElement>()
+  REVEAL_SELECTORS.forEach((sel) => {
+    document.querySelectorAll<HTMLElement>(sel).forEach((el) => seen.add(el))
+  })
+  return Array.from(seen).sort((a, b) =>
+    a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+  )
+}
+
+function TextReveal() {
+  const location = useLocation()
+
+  // useLayoutEffect owns the classes: adds .rev before paint, cleans up after.
+  // Must NOT be done in useEffect — its cleanup runs after useLayoutEffect effect
+  // on the same render cycle, which would silently undo the hiding.
+  useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    collectRevealElements().forEach((el, i) => {
+      el.classList.remove('rev-in')
+      el.classList.add('rev')
+      el.style.setProperty('--rev-delay', `${i * 75}ms`)
+    })
+    return () => {
+      document.querySelectorAll<HTMLElement>('.rev').forEach((el) => {
+        el.classList.remove('rev', 'rev-in')
+        el.style.removeProperty('--rev-delay')
+      })
+    }
+  }, [location.pathname])
+
+  // useEffect only owns the IO — never touches classes.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            ;(e.target as HTMLElement).classList.add('rev-in')
+            io.unobserve(e.target)
+          }
+        })
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -20px 0px' },
+    )
+
+    collectRevealElements().forEach((el) => io.observe(el))
+
+    return () => { io.disconnect() }
+  }, [location.pathname])
+
+  return null
+}
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -126,10 +194,8 @@ function App() {
 
   return (
     <div className="site-shell">
-      <div className="bg-atom-wrap" aria-hidden="true">
-        <ReactAtomLogo3D />
-      </div>
-      <ParticleField />
+      <TextReveal />
+      <SceneBackground isDark={theme === 'dark'} />
       <header className="site-header">
         <div className="brand-cluster brand-line-animated">
           <NavLink className="brand" to={ROUTES.home}>
