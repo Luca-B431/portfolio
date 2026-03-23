@@ -12,13 +12,18 @@ const REVEAL_SELECTORS = [
   '.hero-panel h1',
   '.hero-panel .hero-copy',
   '.hero-panel .hero-actions',
+  '.featured-project h2',
+  '.featured-project > .featured-project-body .featured-project-text > p',
+  '.featured-project .stack-list',
+  '.featured-project .hero-actions',
+  '.featured-project-preview',
   '.section-head h1',
   '.project-card',
   '.detail-card h1',
   '.detail-card > p:not(.eyebrow)',
   '.detail-card .stack-list',
   '.detail-card .hero-actions',
-  '.detail-card > .text-link',
+  '.detail-card > .btn',
 ]
 
 function collectRevealElements(): HTMLElement[] {

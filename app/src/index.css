@@ -384,6 +384,9 @@ a {
 .detail-card {
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 2rem;
@@ -474,7 +477,7 @@ h2 {
 }
 
 h1 {
-  margin-top: 0.55rem;
+  margin-top: 0;
   font-size: clamp(1.7rem, 4vw, 3rem);
   line-height: 1.1;
 }
@@ -490,15 +493,14 @@ p {
 
 .hero-copy {
   max-width: 65ch;
-  margin-top: 1rem;
 }
 
 .hero-actions,
 .card-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.7rem;
-  margin-top: 1.2rem;
 }
 
 .btn {
@@ -507,8 +509,11 @@ p {
   gap: 0.45rem;
   text-decoration: none;
   border-radius: 999px;
-  padding: 0.6rem 1rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.875rem;
+  line-height: 1.2;
   font-weight: 700;
+  white-space: nowrap;
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
@@ -525,6 +530,7 @@ p {
 .btn-primary {
   color: #ffffff;
   background: var(--accent);
+  border: 1px solid transparent;
   box-shadow: 0 8px 20px var(--accent-shadow);
 }
 
@@ -533,19 +539,44 @@ p {
   background: var(--card);
 }
 
+.detail-card > .btn {
+  align-self: flex-start;
+  margin-top: 0.75rem;
+}
+
 .section-head {
   margin-bottom: 1.2rem;
 }
 
+.projects-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .project-grid {
-  display: grid;
+  display: flex;
+  flex-direction: row;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.project-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .project-card {
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 calc((100% - 3 * 1rem) / 4);
+  gap: 0.75rem;
+  scroll-snap-align: start;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 1.2rem;
@@ -553,13 +584,77 @@ p {
     linear-gradient(150deg, color-mix(in srgb, var(--glass-highlight) 38%, transparent), transparent 50%),
     var(--glass-bg);
   backdrop-filter: blur(4px) saturate(1.16);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 90%, transparent),
-    0 12px 28px rgba(8, 16, 28, 0.11);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 90%, transparent);
 }
 
-.project-card p {
-  margin-top: 0.65rem;
+.project-card .card-actions {
+  margin-top: auto;
+}
+
+/* ---- Featured project (homepage) ------------------------------------------ */
+
+.featured-project {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--glass-highlight) 42%, transparent), transparent 48%),
+    var(--glass-bg);
+  backdrop-filter: blur(4px) saturate(1.16);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 92%, transparent),
+    0 12px 30px rgba(8, 16, 28, 0.12);
+  margin-top: 1rem;
+}
+
+.featured-project-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.featured-project-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.featured-project-text h2 {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.featured-project-preview {
+  position: relative;
+  margin: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px rgba(8, 16, 28, 0.15);
+  background: var(--line);
+  aspect-ratio: 16 / 10;
+}
+
+.featured-project-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .featured-project-body {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-project-preview {
+    order: -1;
+  }
 }
 
 .stack-list {
@@ -568,7 +663,7 @@ p {
   flex-wrap: wrap;
   gap: 0.4rem;
   padding: 0;
-  margin: 1rem 0 0;
+  margin: 0;
 }
 
 .stack-list li {
