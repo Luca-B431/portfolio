@@ -25,7 +25,7 @@ async function capture(colorScheme, outPath) {
   await page.emulateMedia({ colorScheme })
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto(url, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(4000)
   await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: 1280, height: 800 } })
   await page.close()
   console.log(`Screenshot saved → ${outPath}`)

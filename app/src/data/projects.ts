@@ -16,10 +16,10 @@ export const projects: Project[] = [
     id: 'alphoto',
     slug: 'alphoto',
     title: 'ALphoto',
-    shortDescription: "Site vitrine pour une photographe professionnelle — hero 3D, galerie lightbox et animations fluides.",
+    shortDescription: "Site vitrine pour Angéla Linck, photographe à Bordeaux — hero 3D R3F, galerie lightbox filtrée, dark mode et animations GSAP + Framer Motion.",
     longDescription:
-      "Site vitrine réalisé pour Angéla Linck, photographe professionnelle. SPA React 19 avec TypeScript, bundlé par Vite et déployé sur Vercel. L'interface propose un hero immersif en 3D rendu avec React Three Fiber et Three.js, une galerie plein écran avec lightbox (yet-another-react-lightbox), des transitions fluides via Framer Motion, un smooth scroll Lenis, et une navigation multi-pages avec React Router. Pas de backend ni de Docker — déploiement statique direct sur Vercel avec des headers de sécurité personnalisés.",
-    stack: ['React', 'TypeScript', 'Three.js', 'React Three Fiber', 'Framer Motion', 'Tailwind CSS', 'Lenis'],
+      "Site vitrine réalisé pour Angéla Linck, photographe portrait & animaux basée à Bordeaux. SPA React 19 + TypeScript, bundlée par Vite et déployée sur Vercel. La page d'accueil intègre un hero 3D (React Three Fiber) avec nuage de particules animées et orbs flottants, un titre révélé ligne par ligne via GSAP ScrollTrigger, des compteurs animés et une grille de photos asymétrique en stagger. La galerie propose un filtrage par catégorie (portrait, chien, chat) avec AnimatePresence, et une lightbox plein écran (yet-another-react-lightbox) avec plugins Zoom et Captions. L'app gère le dark mode via localStorage + prefers-color-scheme, un écran de chargement avec transition de logo Framer Motion (layoutId), le smooth scroll Lenis, la navigation multi-pages React Router et un overlay grain CSS. Déploiement statique sans backend, avec headers de sécurité configurés dans vercel.json.",
+    stack: ['React', 'TypeScript', 'Three.js', 'React Three Fiber', 'GSAP', 'Framer Motion', 'Lenis', 'Tailwind CSS v4'],
     liveUrl: 'https://a-lphoto.vercel.app/',
   },
   {
