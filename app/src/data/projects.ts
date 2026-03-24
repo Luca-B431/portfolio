@@ -21,6 +21,7 @@ export const projects: Project[] = [
       "Site vitrine réalisé pour Angéla Linck, photographe portrait & animaux basée à Bordeaux. SPA React 19 + TypeScript, bundlée par Vite et déployée sur Vercel. La page d'accueil intègre un hero 3D (React Three Fiber) avec nuage de particules animées et orbs flottants, un titre révélé ligne par ligne via GSAP ScrollTrigger, des compteurs animés et une grille de photos asymétrique en stagger. La galerie propose un filtrage par catégorie (portrait, chien, chat) avec AnimatePresence, et une lightbox plein écran (yet-another-react-lightbox) avec plugins Zoom et Captions. L'app gère le dark mode via localStorage + prefers-color-scheme, un écran de chargement avec transition de logo Framer Motion (layoutId), le smooth scroll Lenis, la navigation multi-pages React Router et un overlay grain CSS. Déploiement statique sans backend, avec headers de sécurité configurés dans vercel.json.",
     stack: ['React', 'TypeScript', 'Three.js', 'React Three Fiber', 'GSAP', 'Framer Motion', 'Lenis', 'Tailwind CSS v4'],
     liveUrl: 'https://a-lphoto.vercel.app/',
+    repoUrl: null,
   },
   {
     id: 'wealthealth',
